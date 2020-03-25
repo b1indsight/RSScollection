@@ -9,6 +9,10 @@
 
 <body>
     <p th:text="'Hello, ' + ${name} + '!'" />
+    <div class="post">
+        <h1 th:text="'title = ' + ${title}"></h1>
+        <p th:text="'entries =' + ${entries.get(0).getTitle()}"></p>
+    </div>
     <div class="add">
         <h2>注册新账号</h2>
         <form action="/signup" method="GET">
