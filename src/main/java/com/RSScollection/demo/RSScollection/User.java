@@ -21,7 +21,7 @@ public class User{
 
     @Override
     public String toString() {
-        return "{" + id + name + "}";
+        return "{" + id + name +  password + "}";
     }
 
     public String getName() {
@@ -38,6 +38,10 @@ public class User{
         return;
     }
 
+    public String getPassword() {
+        return this.password;
+    }
+
     public ArrayList<String> getRssUrl() {
         return this.Rssurl;
     }
@@ -45,5 +49,12 @@ public class User{
     public void addUrl(String url) {
         this.Rssurl.add(url);
         return;
+    }
+
+    public static User createAnonymous() {
+        User user = new User();
+        user.setName("Anonymous");
+        user.setPassword("null");
+        return user;
     }
 }

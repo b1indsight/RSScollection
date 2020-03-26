@@ -40,22 +40,44 @@ public class mainController {
     }
 
     @GetMapping(path="/")
-    public String welcomePage(@RequestParam(name="name", required=false, defaultValue="World")
-        String namel,HttpServletRequest request){
-            String url = "https://pythonhunter.org/episodes/feed.xml";
-            try{
-                XmlReader reader = new XmlReader(new URL(url));
-                SyndFeed feed = new SyndFeedInput().build(reader);
-                System.out.println(feed.getTitle());
-                System.out.println("***********************************");
-                String title = feed.getTitle();
-                System.out.println(title);
-                request.setAttribute("title", title);
-                List<SyndEntry> entries =  feed.getEntries();
-                request.setAttribute("entries", entries);
-            }catch(Exception e){
-                e.printStackTrace();
-            }
+    public String welcomePage(@RequestParam(name="user", required=false, defaultValue="World")
+        String namel,HttpServletRequest request,HttpSession session){
+        String url = "https://pythonhunter.org/episodes/feed.xml";
+        User anonymousUser = User.createAnonymous();
+        session.setAttribute("currentUser", anonymousUser);
+        session.setAttribute("name", "anonymousUser");
+        try{
+            XmlReader reader = new XmlReader(new URL(url));
+            SyndFeed feed = new SyndFeedInput().build(reader);
+            System.out.println(feed.getTitle());
+            System.out.println("***********************************");
+            String title = feed.getTitle();
+            System.out.println(title);
+            request.setAttribute("title", title);
+            List<SyndEntry> entries =  feed.getEntries();
+            request.setAttribute("entries", entries);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
 
-            return "index";}
+        return "index";}
+
+    @GetMapping(path="/login") 
+    public @ResponseBody String login (@RequestParam String name
+                    , @RequestParam String password, HttpServletRequest request
+                    , HttpSession session) {
+        User user = new User();
+        user.setName(name);
+        user.setPassword(password);
+        User currtentUser =  userRepository.findByName(name).get(0);
+        System.out.println("currtent User=" + currtentUser + "User=" + user);
+        if (user.getPassword().equals(currtentUser.getPassword())) {
+            log.info("login success");
+            session.setAttribute("currentUser", currtentUser);
+        }else {
+            log.info("login failed");
+        }        
+        log.info(user.toString()+" login");
+        return "index";
+    }
 }
