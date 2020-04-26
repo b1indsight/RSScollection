@@ -13,12 +13,10 @@
         <h1 th:text="${session.currentUser.getName()}"></h1>
     </div>
     <div class="post">
-        <h1 th:text="'title = ' + ${title}"></h1>
-        <p th:text="'entries =' + ${entries.get(0).getTitle()}"></p>
-        <ul th:each="entrie, iterStat:${entries}">
-            <li th:text="${entrie.getTitle()}"></li>
-            <li th:text="${entrie.getLink()}">链接</li>
-            <li><a th:href="@{${entrie.getLink()}}"><p th:text="${entrie.getTitle()}"></p></a></li>
+        <ul th:each="post, iterStat:${posts}">
+            <li><a th:href="@{${post.getUrl()}}"><p th:text="${post.getTitle()}"></p></a></li>
+            <li th:thex="${post.getBody()}"></li>
+            <li th:thex="${post.getDate()}"></li>
         </ul>
     </div>
     <div class="add">
@@ -35,6 +33,13 @@
             名字:<input type="text" name="name"><br>
             密码:<input type="password" name="password"><br>
             <input type="submit" value="登陆">
+        </form>
+    </div>
+    <div class="addrss">
+        <h2>添加RSSurl</h2>
+        <form action="/addRss" method="POST">
+            RSSurl:<input type="text" name="url"><br> 
+            <input type="submit" value="add">
         </form>
     </div>
     <div class="all">

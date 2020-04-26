@@ -57,4 +57,8 @@ public class User{
         user.setPassword("null");
         return user;
     }
+
+    public int getId() {
+        return this.id;
+    }
 }

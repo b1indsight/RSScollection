@@ -1,6 +1,8 @@
 package com.RSScollection.demo.RSScollection;
 
 import java.util.ArrayList;
+import java.util.Date;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -14,8 +16,25 @@ public class Posts{
     private String title = new String();
     private String body = new String();
     private String url = new String();
+    private Integer RssId;
+    private Integer userId;
+    private Date publishedDate;
+    private String author;
 
-    public Posts(String url) {
+
+    public Posts() {
+
+    }
+    
+    public Posts(String title, String url, 
+                String author, Date publishedDate, 
+                String body, int userId) {
+        this.title = title;
+        this.author = author;
+        this.publishedDate = publishedDate;
+        this.body = body;
+        this.url = url;
+        this.userId = userId;
         //TODO
     }
 
@@ -50,6 +69,20 @@ public class Posts{
         this.url = url;
         return;
     }
+
+    public int getUserId() {
+        return this.userId;
+    }
+
+    public String getAuthor() {
+        return this.author;
+    }
+
+    public Date getDate() {
+        return this.publishedDate;
+    }
+
+    
 }
     
 
