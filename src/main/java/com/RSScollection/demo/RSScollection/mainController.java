@@ -1,5 +1,7 @@
 package com.RSScollection.demo.RSScollection;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -9,12 +11,24 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import com.rometools.rome.feed.WireFeed;
+import com.rometools.rome.feed.module.Module;
 import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
+import com.rometools.rome.feed.synd.SyndFeedImpl;
 import com.rometools.rome.io.FeedException;
 import com.rometools.rome.io.SyndFeedInput;
+import com.rometools.rome.io.WireFeedInput;
+import com.rometools.rome.io.WireFeedOutput;
 import com.rometools.rome.io.XmlReader;
+import com.rometools.opml.*;
+import com.rometools.opml.feed.opml.Opml;
+import com.rometools.opml.feed.opml.Outline;
+import com.rometools.opml.io.impl.OPML20Generator;
 
+import org.apache.commons.io.FileUtils;
+import org.jdom2.Document;
+import org.jdom2.output.XMLOutputter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +37,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-
-
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class mainController {
@@ -57,7 +71,9 @@ public class mainController {
         }
         try {
             User currentUser = (User) session.getAttribute("currentUser");
+            log.info("user id =" + currentUser.getId());
             List<Rss> currtentRss = rssRepository.findByUserId(currentUser.getId());
+            log.info("Rss list size is" + currtentRss.size());
             ArrayList<Posts> posts = getAllPostsFromRss(currtentRss, currentUser.getId());
             request.setAttribute("posts", posts);
             System.out.println();
@@ -103,17 +119,93 @@ public class mainController {
             throws MalformedURLException, IOException, IllegalArgumentException, FeedException {
         ArrayList<Posts> res = new ArrayList<Posts>();
         for (Rss p : currtentRss) {
+
             XmlReader reader = new XmlReader(new URL(p.getUrl()));
             SyndFeed feed = new SyndFeedInput().build(reader);
             List<SyndEntry> entries = feed.getEntries();
             for (SyndEntry entry : entries) {
-                Posts post = new Posts(entry.getTitle(), entry.getLink(), 
-                                    entry.getAuthor(), entry.getPublishedDate(),
-                                    entry.getDescription().getValue(), currentUserId);
+                Posts post = new Posts(entry.getTitle(), entry.getLink(), entry.getAuthor(), entry.getPublishedDate(),
+                        entry.getDescription().getValue(), currentUserId);
                 res.add(post);
             }
-        } 
+        }
         return res;
     }
+
+    @PostMapping(path = "/uploadOpml")
+    public String uploadOpml(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes,
+            HttpSession session) {
+        List<Rss> uploadRss = parsedOpmlFile(file, (User) session.getAttribute("currentUser"));
+        for (Rss rss : uploadRss) {
+            log.info(rss.getUrl() + " saved");
+        }
+
+        redirectAttributes.addFlashAttribute("message",
+                "You successfully uploaded " + file.getOriginalFilename() + "!");
+
+        return "redirect:/";
+    }
+
+    private List<Rss> parsedOpmlFile(MultipartFile file, User user) {
+        ArrayList<Rss> res = new ArrayList<Rss>();
+        WireFeedInput input = new WireFeedInput();
+        String path = "E:\\";
+        File tmpFile = new File(path, "demo.xml");
+        try {
+            FileUtils.copyInputStreamToFile(file.getInputStream(), tmpFile);
+            Opml feed = (Opml) input.build(tmpFile);
+            log.info(feed.getTitle());
+            List<Outline> outlines = feed.getOutlines();
+            for (Outline outline : outlines) {
+                for (Outline child : outline.getChildren()) {
+                    Rss rss = new Rss(child.getXmlUrl(), user.getId());
+                    rss.setTitle(child.getTitle());
+                    res.add(rss);
+                    rssRepository.save(rss);
+                }
+            }
+            if (true) {
+                log.info("file delete success");
+            }
+        } catch (IllegalArgumentException | IOException | FeedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return (List<Rss>) res;
+    }
+
+    @GetMapping(path = "/exportOpml")
+    public @ResponseBody File exportOpml(HttpSession session) throws IOException {
+        String path = "E:\\";
+        File tmpFile = new File(path, "tmp.opml");
+        OPML20Generator generator = new OPML20Generator();
+        User currentUser = (User) session.getAttribute("currentUser");
+        List<Rss> rss = rssRepository.findByUserId(currentUser.getId());
+        ArrayList<Module> tmpModules = new ArrayList<Module>();
+        for (int i = 0; i < rss.size(); i++) {
+            SyndFeed feed = new SyndFeedImpl();
+            Rss tmp = rss.get(i);
+            feed.setUri(tmp.getUrl());
+            feed.setTitle(tmp.getTitle());
+            List<Module> modules = feed.getModules();
+            tmpModules.addAll(modules);
+        }
+        Document res;
+        Opml wirefeed = new Opml();
+        wirefeed.setModules(tmpModules);
+        wirefeed.setFeedType("rss_2.0");
+        wirefeed.setTitle("export");
+        try {
+            res = generator.generate(wirefeed);
+            XMLOutputter XMLoutput = new XMLOutputter();
+            FileOutputStream fileOutput = new FileOutputStream(tmpFile);
+            XMLoutput.output(res, fileOutput);
+        } catch (IllegalArgumentException | FeedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return tmpFile;
+    }
+
 
 }                                    

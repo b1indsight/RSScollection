@@ -42,8 +42,20 @@
             <input type="submit" value="add">
         </form>
     </div>
-    <div class="all">
-        <h2><a href="/all">查看所有注册账号信息</a></h2>
+    <div>
+        <h2>导入opml文件</h2>
+        <form method="POST" enctype="multipart/form-data" action="/uploadOpml">
+            <table>
+				<tr><td>File to upload:</td><td><input type="file" name="file" /></td></tr>
+				<tr><td></td><td><input type="submit" value="Upload" /></td></tr>
+			</table>
+        </form>
+    </div>
+    <div>
+        <h2>导出opml文件</h2>
+        <form action="/exportOpml" method="GET">
+            <input type="submit" value="导出">
+        </form>
     </div>
 </body>
 

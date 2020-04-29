@@ -54,6 +54,18 @@
 			<artifactId>rome</artifactId>
 			<version>1.12.2</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.6</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.rometools/rome-opml -->
+		<dependency>
+			<groupId>com.rometools</groupId>
+			<artifactId>rome-opml</artifactId>
+			<version>1.12.2</version>
+		</dependency>
 	</dependencies>
 
 	<build>
