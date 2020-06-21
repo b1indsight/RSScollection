@@ -3,6 +3,7 @@ package com.RSScollection.demo.RSScollection;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -21,12 +22,19 @@ import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.WireFeedInput;
 import com.rometools.rome.io.WireFeedOutput;
 import com.rometools.rome.io.XmlReader;
+import com.RSScollection.demo.RSScollection.models.Posts;
+import com.RSScollection.demo.RSScollection.models.Rss;
+import com.RSScollection.demo.RSScollection.models.User;
 import com.rometools.opml.*;
 import com.rometools.opml.feed.opml.Opml;
 import com.rometools.opml.feed.opml.Outline;
 import com.rometools.opml.io.impl.OPML20Generator;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.jdom2.Document;
 import org.jdom2.output.XMLOutputter;
 import org.slf4j.Logger;
@@ -44,19 +52,16 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class mainController {
     private static final Logger log = LoggerFactory.getLogger(mainController.class);
 
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private PostsRepository postsRepository;
-    @Autowired
-    private RssRepository rssRepository;
-
     @GetMapping(path = "/signup")
-    public @ResponseBody String addNewUser(@RequestParam String name, @RequestParam String password) {
+    public @ResponseBody String addNewUser(@RequestParam String name,
+        @RequestParam String password) {
         User user = new User();
         user.setName(name);
         user.setPassword(password);
-        userRepository.save(user);
+        try(SqlSession sqlSession = MybatisUtil.getSqlSession()){
+            sqlSession.insert("saveUser", user);
+            sqlSession.commit();
+        }
         log.info(user.toString() + " saved to the repo");
         return "Saved";
     }
@@ -64,25 +69,34 @@ public class mainController {
     @GetMapping(path = "/")
     public String welcomePage(@RequestParam(name = "user", required = false, defaultValue = "World") String namel,
             HttpServletRequest request, HttpSession session) {
-        if (session.getAttribute("currentUser") == null) {
-            User anonymousUser = User.createAnonymous();
-            session.setAttribute("currentUser", anonymousUser);
-            session.setAttribute("name", "anonymousUser");
-        }
-        try {
+        
+        if (session.getAttribute("islogin") == null ||
+            (Boolean) session.getAttribute("islogin") != true) {
+            log.info("user is not login");
+            session.setAttribute("islogin", false);
+        } else {
             User currentUser = (User) session.getAttribute("currentUser");
             log.info("user id =" + currentUser.getId());
-            List<Rss> currtentRss = rssRepository.findByUserId(currentUser.getId());
-            log.info("Rss list size is" + currtentRss.size());
-            ArrayList<Posts> posts = getAllPostsFromRss(currtentRss, currentUser.getId());
-            request.setAttribute("posts", posts);
-            System.out.println();
-            System.out.println("***********************************");
-            log.info(session.getAttribute("currentUser") + "currentUser is here");
-        } catch (Exception e) {
-            e.printStackTrace();
+            ArrayList<Rss> currentRss = new ArrayList<Rss>();
+            for (String url : currentUser.getRssUrl()) {
+                log.info("Rss url is" + url);
+                currentRss.add(new Rss(url, currentUser.getId()));
+            }
+            log.info("Rss list size is" + currentRss.size());
+            ArrayList<Posts> posts;
+            try {
+                posts = getAllPostsFromRss(currentRss, currentUser.getId());
+            } catch (IllegalArgumentException | IOException | FeedException e) {
+                e.printStackTrace();
+                throw new RuntimeException("can't get posts from Rss list.");
+            } finally{
+                MybatisUtil.closeSqlSession();
+            }
+            session.setAttribute("posts", posts);
         }
-
+            log.info("");
+            log.info("***********************************");
+            log.info(session.getAttribute("currentUser") + "currentUser is here");
         return "index";
     }
 
@@ -92,17 +106,23 @@ public class mainController {
         User user = new User();
         user.setName(name);
         user.setPassword(password);
-        User currtentUser = userRepository.findByName(name).get(0);
-        System.out.println("currtent User=" + currtentUser + "User=" + user);
-        if (user.getPassword().equals(currtentUser.getPassword())) {
-            log.info("login success");
-            session.setAttribute("currentUser", currtentUser);
-
-        } else {
-            log.info("login failed");
+        
+        try(SqlSession sqlSession = MybatisUtil.getSqlSession()){
+            User currentUser = sqlSession.selectOne("findByName", name);
+        
+            System.out.println("current User=" + currentUser + "User=" + user);
+            if (user.getPassword().equals(currentUser.getPassword())) {
+                log.info("login success");
+                session.setAttribute("currentUser", currentUser);
+                session.setAttribute("islogin", true);
+            } else {
+                log.info("login failed");
+            }
+            log.info(user.toString() + " login");
+            log.info(session.getAttribute("currentUser") + "currentUser is here");
+        }finally{
+            MybatisUtil.closeSqlSession();
         }
-        log.info(user.toString() + " login");
-        log.info(session.getAttribute("currentUser") + "currentUser is here");
         return "forward:/";
     }
 
@@ -110,15 +130,22 @@ public class mainController {
     public @ResponseBody String addRss(@RequestParam String url, HttpServletRequest request, HttpSession session) {
         User user = (User) session.getAttribute("currentUser");
         Rss rss = new Rss(url, user.getId());
-        rssRepository.save(rss);
+        try (SqlSession sqlSession = MybatisUtil.getSqlSession()){
+            User currentUser = sqlSession.selectOne("findById", user.getId());
+            currentUser.addUrl(rss.getUrl());
+            sqlSession.update("update", currentUser);
+            sqlSession.commit();
+        }finally{
+            MybatisUtil.closeSqlSession();
+        }
         log.info("add Rss is done");
         return "success";
     }
 
-    private ArrayList<Posts> getAllPostsFromRss(List<Rss> currtentRss, int currentUserId)
+    private ArrayList<Posts> getAllPostsFromRss(List<Rss> currentRss, int currentUserId)
             throws MalformedURLException, IOException, IllegalArgumentException, FeedException {
         ArrayList<Posts> res = new ArrayList<Posts>();
-        for (Rss p : currtentRss) {
+        for (Rss p : currentRss) {
 
             XmlReader reader = new XmlReader(new URL(p.getUrl()));
             SyndFeed feed = new SyndFeedInput().build(reader);
@@ -151,7 +178,7 @@ public class mainController {
         WireFeedInput input = new WireFeedInput();
         String path = "E:\\";
         File tmpFile = new File(path, "demo.xml");
-        try {
+        try (SqlSession sqlSession = MybatisUtil.getSqlSession()) {
             FileUtils.copyInputStreamToFile(file.getInputStream(), tmpFile);
             Opml feed = (Opml) input.build(tmpFile);
             log.info(feed.getTitle());
@@ -161,51 +188,53 @@ public class mainController {
                     Rss rss = new Rss(child.getXmlUrl(), user.getId());
                     rss.setTitle(child.getTitle());
                     res.add(rss);
-                    rssRepository.save(rss);
+                    sqlSession.insert("saveRss", rss);
                 }
             }
+            sqlSession.commit();
             if (true) {
                 log.info("file delete success");
             }
         } catch (IllegalArgumentException | IOException | FeedException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
+        } finally{
+            MybatisUtil.closeSqlSession();
         }
         return (List<Rss>) res;
     }
 
-    @GetMapping(path = "/exportOpml")
-    public @ResponseBody File exportOpml(HttpSession session) throws IOException {
-        String path = "E:\\";
-        File tmpFile = new File(path, "tmp.opml");
-        OPML20Generator generator = new OPML20Generator();
-        User currentUser = (User) session.getAttribute("currentUser");
-        List<Rss> rss = rssRepository.findByUserId(currentUser.getId());
-        ArrayList<Module> tmpModules = new ArrayList<Module>();
-        for (int i = 0; i < rss.size(); i++) {
-            SyndFeed feed = new SyndFeedImpl();
-            Rss tmp = rss.get(i);
-            feed.setUri(tmp.getUrl());
-            feed.setTitle(tmp.getTitle());
-            List<Module> modules = feed.getModules();
-            tmpModules.addAll(modules);
-        }
-        Document res;
-        Opml wirefeed = new Opml();
-        wirefeed.setModules(tmpModules);
-        wirefeed.setFeedType("rss_2.0");
-        wirefeed.setTitle("export");
-        try {
-            res = generator.generate(wirefeed);
-            XMLOutputter XMLoutput = new XMLOutputter();
-            FileOutputStream fileOutput = new FileOutputStream(tmpFile);
-            XMLoutput.output(res, fileOutput);
-        } catch (IllegalArgumentException | FeedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        return tmpFile;
-    }
+    // @GetMapping(path = "/exportOpml")
+    // public @ResponseBody File exportOpml(HttpSession session) throws IOException {
+    //     String path = "E:\\";
+    //     File tmpFile = new File(path, "tmp.opml");
+    //     OPML20Generator generator = new OPML20Generator();
+    //     User currentUser = (User) session.getAttribute("currentUser");
+    //     List<Rss> rss = rssRepository.findByUserId(currentUser.getId());
+    //     ArrayList<Module> tmpModules = new ArrayList<Module>();
+    //     for (int i = 0; i < rss.size(); i++) {
+    //         SyndFeed feed = new SyndFeedImpl();
+    //         Rss tmp = rss.get(i);
+    //         feed.setUri(tmp.getUrl());
+    //         feed.setTitle(tmp.getTitle());
+    //         List<Module> modules = feed.getModules();
+    //         tmpModules.addAll(modules);
+    //     }
+    //     Document res;
+    //     Opml wirefeed = new Opml();
+    //     wirefeed.setModules(tmpModules);
+    //     wirefeed.setFeedType("rss_2.0");
+    //     wirefeed.setTitle("export");
+    //     try {
+    //         res = generator.generate(wirefeed);
+    //         XMLOutputter XMLoutput = new XMLOutputter();
+    //         FileOutputStream fileOutput = new FileOutputStream(tmpFile);
+    //         XMLoutput.output(res, fileOutput);
+    //     } catch (IllegalArgumentException | FeedException e) {
+    //         // TODO Auto-generated catch block
+    //         e.printStackTrace();
+    //     }
+    //     return tmpFile;
+    //}
 
-
-}                                    
+}

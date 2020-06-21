@@ -1,21 +1,15 @@
-package com.RSScollection.demo.RSScollection;
+package com.RSScollection.demo.RSScollection.models;
 
 import java.util.ArrayList;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 
-@Entity
 public class User{
-    @Id
-    @GeneratedValue(strategy=GenerationType.AUTO)
     int id;
-    String name = new String();
-    String password = new String();
-    ArrayList<String> Rssurl = new ArrayList<String>();
+    String name;
+    String password;
+    ArrayList<String> rssurl;
     
     public User() {
+        rssurl = new ArrayList<String>();
         // TODO
     }
 
@@ -43,11 +37,11 @@ public class User{
     }
 
     public ArrayList<String> getRssUrl() {
-        return this.Rssurl;
+        return this.rssurl;
     }
 
     public void addUrl(String url) {
-        this.Rssurl.add(url);
+        this.rssurl.add(url);
         return;
     }
 

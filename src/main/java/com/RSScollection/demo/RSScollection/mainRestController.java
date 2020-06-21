@@ -1,21 +1,20 @@
 package com.RSScollection.demo.RSScollection;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.HttpSession;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.RSScollection.demo.RSScollection.models.Rss;
+import com.RSScollection.demo.RSScollection.models.User;
+
+import org.apache.ibatis.session.SqlSession;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class mainRestController {
-
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private RssRepository rssRepository;
 
     private class state {
         private boolean state;
@@ -48,17 +47,21 @@ public class mainRestController {
 
     @GetMapping(path = "/isLoggedIn")
     public state isLoggedIn(HttpSession session) {
-        if (session.getAttribute("currentUser").equals(User.createAnonymous())) {
-            return new state(false);
-        } else {
-            return new state(true);
-        }
+        return new state( (boolean) session.getAttribute("islogin"));
     }
 
     @GetMapping(path = "/getFeeds")
     public List<Rss> getFeeds(HttpSession session) {
+        List<Rss> res = new ArrayList<Rss>();
         User currentUser = (User)session.getAttribute("currentUser");
-        List<Rss> res = rssRepository.findByUserId(currentUser.getId());
+        try (SqlSession sqlSession = MybatisUtil.getSqlSession()){
+            List<Object> tmp = sqlSession.selectList("findByUserId", currentUser.getId());
+            if (tmp.get(0) instanceof Rss) {
+                res = (List<Rss>)(List<?>) tmp;
+            }
+        }finally{
+            MybatisUtil.closeSqlSession();
+        }
         return res;
     }
 
@@ -68,8 +71,16 @@ public class mainRestController {
         User user = new User();
         user.setName(name);
         user.setPassword(password);
-        User currtentUser = userRepository.findByName(name).get(0);
-        session.setAttribute("currentUser", currtentUser);
+        try (SqlSession sqlSession = MybatisUtil.getSqlSession()){
+            User currentUser = sqlSession.selectOne("findByName", user.getName());
+            if (currentUser.getPassword().equals(user.getPassword())){
+                session.setAttribute("currentUser", currentUser);
+                session.setAttribute("islogin", true);
+            }
+        }
         return new connectSession(session.getId());
     }
+
+    
+
 }

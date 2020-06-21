@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.RSScollection.demo.RSScollection.models.Rss">
+
+    <resultMap type="com.RSScollection.demo.RSScollection.models.Rss" id="rssMap">					
+		<id property="id" column="id"/>
+		<result property="title" column="title"/>
+		<result property="url" column="url"/>
+        <result property="userId" column="user_id"/>
+	</resultMap>
+
+    <select id="findByUserId" parameterType="Integer" resultMap="rssMap">
+        SELECT * FROM rss WHERE user_id = #{userId};
+    </select>
+
+    <insert id="saveRss" parameterType="com.RSScollection.demo.RSScollection.models.Rss" 
+        keyProperty="id"  useGeneratedKeys="true">
+        INSERT INTO rss (title, url, user_id) VALUES (#{title}, #{url}, #{userId});
+    </insert>
+
+</mapper>
+

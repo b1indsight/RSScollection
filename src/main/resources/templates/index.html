@@ -8,12 +8,11 @@
 </head>
 
 <body>
-    <h1 th:text="${session.currentUser.getName()}"></h1>
-    <div th:if="${session.currentUser.getPassword()} ne 'null'">
+    <div th:if="${session.islogin} eq 'true'">
         <h1 th:text="${session.currentUser.getName()}"></h1>
     </div>
     <div class="post">
-        <ul th:each="post, iterStat:${posts}">
+        <ul th:each="post, iterStat:${session.posts}">
             <li><a th:href="@{${post.getUrl()}}"><p th:text="${post.getTitle()}"></p></a></li>
             <li th:thex="${post.getBody()}"></li>
             <li th:thex="${post.getDate()}"></li>
