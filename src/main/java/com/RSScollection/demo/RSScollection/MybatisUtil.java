@@ -48,5 +48,4 @@ public class MybatisUtil {
 			threadLocal.remove();
 		}
 	}	
-
 }
