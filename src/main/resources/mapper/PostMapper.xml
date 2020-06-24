@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.RSScollection.demo.RSScollection.models.Post">
+
+    <typeAlias type="com.RSScollection.demo.RSScollection.models.Post" alias="Post"/>
+
+    <resultMap type="Post" id="postMap">					
+		<id property="id" column="id"/>
+		<result property="title" column="title"/>
+		<result property="url" column="url"/>
+        <result property="userId" column="user_id"/>
+        <result property="RssId" column="rss_id"/>
+        <result property="author" column="author"/>
+        <result property="body" column="body"/>
+        <result property="publishedDate" column="published_date"/>
+	</resultMap>
+
+    <select id="findByUserId" parameterType="Integer" resultMap="postMap">
+        SELECT * FROM posts WHERE user_id = #{userId};
+    </select>
+
+    <insert id="savePost" parameterType="Post" 
+        keyProperty="id"  useGeneratedKeys="true">
+        INSERT INTO posts (title, url, user_id, rss_id, author, body, published_date) 
+        VALUES (#{title}, #{url}, #{userId}, #{RssId}, #{author}, #{body}, #{publishedDate});
+    </insert>
+
+</mapper>

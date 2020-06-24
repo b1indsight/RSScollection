@@ -3,13 +3,7 @@ package com.RSScollection.demo.RSScollection.models;
 import java.util.ArrayList;
 import java.util.Date;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-
 public class Posts{
-    @Id
-    @GeneratedValue(strategy=GenerationType.AUTO)
     private Integer id;
     private String title = new String();
     private String body = new String();
