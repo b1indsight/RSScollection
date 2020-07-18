@@ -75,6 +75,12 @@ public class PostService {
 
     public void savePost(Posts p) {
         // TODO: this function should save posts into mysql
+        try (SqlSession sqlSession = MybatisUtil.getSqlSession()){
+            sqlSession.insert("savePost", p);
+            sqlSession.commit();
+        }finally {
+            MybatisUtil.closeSqlSession();
+        }
     }
 
     public void savePostsBasicInformation(Posts p) {
