@@ -27,6 +27,14 @@ public class PostService {
         public Information() {
         };
 
+        public Information(String title, String url, String author, Date publishedDate, Integer userId) {
+            this.title = title;
+            this.url = url;
+            this.author = author;
+            this.publishedDate = publishedDate;
+            this.userId = userId;
+        }
+
         @Override
         public String toString() {
             ObjectMapper mapper = new ObjectMapper();
@@ -87,7 +95,16 @@ public class PostService {
         // TODO: this function should save posts basic information (
         // include id, title, url, author and publishedDate) into redis
         // using json
+        Information inf = new Information(p.getTitle(), p.getUrl(), 
+                                          p.getAuthor(), p.getDate(), 
+                                          p.getUserId());
+        String key = "Posts" + p.getUserId();
 
+        try (Jedis jedis = RedisUtil.getRedisConnect()) {
+            jedis.set(key, inf.toString());
+        }finally {
+            RedisUtil.closeRedisConnect();
+        }
 
     }
 
