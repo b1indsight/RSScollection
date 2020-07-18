@@ -15,6 +15,8 @@ import org.apache.ibatis.session.SqlSession;
 import redis.clients.jedis.Jedis;
 
 public class PostService {
+
+
     private class Information {
         public String title;
         public String url;
@@ -59,9 +61,16 @@ public class PostService {
         return res;
     }
 
-    public List<Posts> getPosts() {
+    public List<Posts> getPosts(int userId) {
         // TODO: this function should accept a user_id parameter and
         // return the Posts list
+        List<Posts> res;
+        try (SqlSession sqlSession = MybatisUtil.getSqlSession()) {
+            res = sqlSession.selectList("findByUserId", userId);
+        }
+
+        return res;
+
     }
 
     public void savePost(Posts p) {
@@ -71,7 +80,9 @@ public class PostService {
     public void savePostsBasicInformation(Posts p) {
         // TODO: this function should save posts basic information (
         // include id, title, url, author and publishedDate) into redis
-        // using
+        // using json
+
+
     }
 
     private Boolean getPostInformationFromRedis(int id, Information inf){

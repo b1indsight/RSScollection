@@ -22,6 +22,10 @@
         SELECT * FROM posts WHERE user_id = #{userId};
     </select>
 
+    <select id="findById" parameterType="Integer" resultMap="postMap">
+        SELECT * FROM rss WHERE id = #{id};
+    </select>
+
     <insert id="savePost" parameterType="Post" 
         keyProperty="id"  useGeneratedKeys="true">
         INSERT INTO posts (title, url, user_id, rss_id, author, body, published_date) 

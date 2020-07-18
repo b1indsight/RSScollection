@@ -16,6 +16,10 @@
         SELECT * FROM rss WHERE user_id = #{userId};
     </select>
 
+    <select id="findById" parameterType="Integer" resultMap="rssMap">
+        SELECT * FROM rss WHERE id = #{id};
+    </select>
+
     <insert id="saveRss" parameterType="com.RSScollection.demo.RSScollection.models.Rss" 
         keyProperty="id"  useGeneratedKeys="true">
         INSERT INTO rss (title, url, user_id) VALUES (#{title}, #{url}, #{userId});
