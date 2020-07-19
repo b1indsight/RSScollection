@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,9 +43,14 @@ import org.jdom2.output.XMLOutputter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
@@ -161,7 +169,7 @@ public class mainController {
 
     @PostMapping(path = "/uploadOpml")
     public String uploadOpml(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes,
-            HttpSession session) {
+                             HttpSession session) {
         List<Rss> uploadRss = parsedOpmlFile(file, (User) session.getAttribute("currentUser"));
         for (Rss rss : uploadRss) {
             log.info(rss.getUrl() + " saved");
@@ -204,37 +212,59 @@ public class mainController {
         return (List<Rss>) res;
     }
 
-    // @GetMapping(path = "/exportOpml")
-    // public @ResponseBody File exportOpml(HttpSession session) throws IOException {
-    //     String path = "E:\\";
-    //     File tmpFile = new File(path, "tmp.opml");
-    //     OPML20Generator generator = new OPML20Generator();
-    //     User currentUser = (User) session.getAttribute("currentUser");
-    //     List<Rss> rss = rssRepository.findByUserId(currentUser.getId());
-    //     ArrayList<Module> tmpModules = new ArrayList<Module>();
-    //     for (int i = 0; i < rss.size(); i++) {
-    //         SyndFeed feed = new SyndFeedImpl();
-    //         Rss tmp = rss.get(i);
-    //         feed.setUri(tmp.getUrl());
-    //         feed.setTitle(tmp.getTitle());
-    //         List<Module> modules = feed.getModules();
-    //         tmpModules.addAll(modules);
-    //     }
-    //     Document res;
-    //     Opml wirefeed = new Opml();
-    //     wirefeed.setModules(tmpModules);
-    //     wirefeed.setFeedType("rss_2.0");
-    //     wirefeed.setTitle("export");
-    //     try {
-    //         res = generator.generate(wirefeed);
-    //         XMLOutputter XMLoutput = new XMLOutputter();
-    //         FileOutputStream fileOutput = new FileOutputStream(tmpFile);
-    //         XMLoutput.output(res, fileOutput);
-    //     } catch (IllegalArgumentException | FeedException e) {
-    //         // TODO Auto-generated catch block
-    //         e.printStackTrace();
-    //     }
-    //     return tmpFile;
-    //}
+    @GetMapping(path = "/exportOpml")
+    public ResponseEntity<Resource> exportOpml(HttpSession session) throws IOException {
+        String path = "\\";
+        File tmpFile = new File(path, "tmp.opml");
+        OPML20Generator generator = new OPML20Generator();
+        User currentUser = (User) session.getAttribute("currentUser");
+        List<Rss> rss;
+        
+        try (SqlSession sqlSession = MybatisUtil.getSqlSession()){
+            rss = sqlSession.selectList("findByUserId", currentUser.getId());
+        }finally {
+            MybatisUtil.closeSqlSession();
+        }
+
+        ArrayList<Module> tmpModules = new ArrayList<Module>();
+        for (int i = 0; i < rss.size(); i++) {
+            SyndFeed feed = new SyndFeedImpl();
+            Rss tmp = rss.get(i);
+            feed.setUri(tmp.getUrl());
+            feed.setTitle(tmp.getTitle());
+            List<Module> modules = feed.getModules();
+            tmpModules.addAll(modules);
+        }
+
+        Document res;
+        Opml wirefeed = new Opml();
+        wirefeed.setModules(tmpModules);
+        wirefeed.setFeedType("rss_2.0");
+        wirefeed.setTitle("export");
+        try {
+            res = generator.generate(wirefeed);
+            XMLOutputter XMLoutput = new XMLOutputter();
+            FileOutputStream fileOutput = new FileOutputStream(tmpFile);
+            XMLoutput.output(res, fileOutput);
+        } catch (IllegalArgumentException | FeedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        HttpHeaders header = new HttpHeaders();
+        header.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=1.opml");
+        header.add("Cache-Control", "no-cache, no-store, must-revalidate");
+        header.add("Pragma", "no-cache");
+        header.add("Expires", "0");
+
+        Path resPath = Paths.get(tmpFile.getAbsolutePath());
+        ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(resPath));
+
+        return ResponseEntity.ok()
+                .headers(header)
+                .contentLength(tmpFile.length())
+                .contentType(MediaType.APPLICATION_XML)
+                .body(resource);
+    }
 
 }

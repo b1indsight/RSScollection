@@ -27,7 +27,6 @@ public class Posts{
         this.body = body;
         this.url = url;
         this.userId = userId;
-        //TODO
     }
 
     @Override

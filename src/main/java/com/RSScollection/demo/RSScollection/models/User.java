@@ -10,7 +10,6 @@ public class User{
     
     public User() {
         rssurl = new ArrayList<String>();
-        // TODO
     }
 
     @Override
