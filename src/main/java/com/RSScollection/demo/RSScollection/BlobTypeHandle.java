@@ -22,62 +22,65 @@ import org.hibernate.tool.schema.extract.spi.ExtractionContext.DatabaseObjectAcc
 
 public class BlobTypeHandle extends BaseTypeHandler<List<String>> {
 
-    @Override
-    public void setNonNullParameter(PreparedStatement ps, int i, List<String> parameter, JdbcType jdbcType)
-            throws SQLException {
-        ByteArrayInputStream bis;
-        int length = 0;
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
+  @Override
+  public void setNonNullParameter(PreparedStatement ps, int i, 
+      List<String> parameter, JdbcType jdbcType) throws SQLException {
+    ByteArrayInputStream bis;
+    int length = 0;
+    try {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ObjectOutputStream oos = new ObjectOutputStream(baos);
 
-            oos.writeObject(parameter);
-            
-            byte[] tmp = baos.toByteArray();
-            bis = new ByteArrayInputStream(tmp);
-            length = tmp.length;
+      oos.writeObject(parameter);
+      
+      byte[] tmp = baos.toByteArray();
+      bis = new ByteArrayInputStream(tmp);
+      length = tmp.length;
 
-            ps.setBinaryStream(i, bis, length);	
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException("Blob Encoding error");
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+      ps.setBinaryStream(i, bis, length);	
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException("Blob Encoding error");
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
 	}
 
-    @Override
-    public List<String> getNullableResult(ResultSet rs, String columnName) throws SQLException {
-        Blob blob = (Blob) rs.getBlob(columnName);
-        byte[] returnValue = null;
-        List<String> res = new ArrayList<String>();
+  @Override
+  public List<String> getNullableResult(ResultSet rs, String columnName) 
+      throws SQLException {
+    Blob blob = (Blob) rs.getBlob(columnName);
+    byte[] returnValue = null;
+    List<String> res = new ArrayList<String>();
 
-        if (null != blob){
-            returnValue = blob.getBytes(1, (int) blob.length());
-            try{
-                ByteArrayInputStream bais = new ByteArrayInputStream(returnValue);
-                ObjectInputStream ois = new ObjectInputStream(bais);
-                System.out.println("ois print is " + ois);
-                res = (List<String>) ois.readObject();
-            }catch (UnsupportedEncodingException e) {  
-                throw new RuntimeException("Blob Decoding Error!");  
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
-        return res;
+    if (null != blob){
+      returnValue = blob.getBytes(1, (int) blob.length());
+      try{
+        ByteArrayInputStream bais = new ByteArrayInputStream(returnValue);
+        ObjectInputStream ois = new ObjectInputStream(bais);
+        System.out.println("ois print is " + ois);
+        res = (List<String>) ois.readObject();
+      }catch (UnsupportedEncodingException e) {  
+        throw new RuntimeException("Blob Decoding Error!");  
+      } catch (IOException e) {
+        e.printStackTrace();
+      } catch (ClassNotFoundException e) {
+        e.printStackTrace();
+      }
     }
+    return res;
+  }
 
-    @Override
-    public List<String> getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
-        return null;
-    }
+  @Override
+  public List<String> getNullableResult(ResultSet rs, int columnIndex) 
+      throws SQLException {
+    return null;
+  }
 
-    @Override
-    public List<String> getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
-        return null;
-    }
+  @Override
+  public List<String> getNullableResult(CallableStatement cs, int columnIndex) 
+      throws SQLException {
+    return null;
+  }
 
 }

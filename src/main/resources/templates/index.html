@@ -2,60 +2,60 @@
 <html xmlns:th="http://www.thymeleaf.org">
 
 <head>
-    <title>RSScollection</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <link rel="stylesheet" href="index.css">
+  <title>RSScollection</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <link rel="stylesheet" href="index.css">
 </head>
 
 <body>
-    <div th:if="${session.islogin} eq 'true'">
-        <h1 th:text="${session.currentUser.getName()}"></h1>
-    </div>
-    <div class="post">
-        <ul th:each="post, iterStat:${session.posts}">
-            <li><a th:href="@{${post.getUrl()}}"><p th:text="${post.getTitle()}"></p></a></li>
-            <li th:thex="${post.getBody()}"></li>
-            <li th:thex="${post.getDate()}"></li>
-        </ul>
-    </div>
-    <div class="add">
-        <h2>注册新账号</h2>
-        <form action="/signup" method="GET">
-            用户名:<input type="text" name="name"><br>
-            密码:<input type="password" name="password"><br>
-            <input type="submit" value="注册">
-        </form>
-    </div>
-    <div class="login">
-        <h2>登陆已有账号</h2>
-        <form action="/login" method="GET">
-            名字:<input type="text" name="name"><br>
-            密码:<input type="password" name="password"><br>
-            <input type="submit" value="登陆">
-        </form>
-    </div>
-    <div class="addrss">
-        <h2>添加RSSurl</h2>
-        <form action="/addRss" method="POST">
-            RSSurl:<input type="text" name="url"><br> 
-            <input type="submit" value="add">
-        </form>
-    </div>
-    <div>
-        <h2>导入opml文件</h2>
-        <form method="POST" enctype="multipart/form-data" action="/uploadOpml">
-            <table>
+  <div th:if="${session.islogin} eq 'true'">
+    <h1 th:text="${session.currentUser.getName()}"></h1>
+  </div>
+  <div class="post">
+    <ul th:each="post, iterStat:${session.posts}">
+      <li><a th:href="@{${post.getUrl()}}"><p th:text="${post.getTitle()}"></p></a></li>
+      <li th:thex="${post.getBody()}"></li>
+      <li th:thex="${post.getDate()}"></li>
+    </ul>
+  </div>
+  <div class="add">
+    <h2>注册新账号</h2>
+    <form action="/signup" method="GET">
+      用户名:<input type="text" name="name"><br>
+      密码:<input type="password" name="password"><br>
+      <input type="submit" value="注册">
+    </form>
+  </div>
+  <div class="login">
+    <h2>登陆已有账号</h2>
+    <form action="/login" method="GET">
+      名字:<input type="text" name="name"><br>
+      密码:<input type="password" name="password"><br>
+      <input type="submit" value="登陆">
+    </form>
+  </div>
+  <div class="addrss">
+    <h2>添加RSSurl</h2>
+    <form action="/addRss" method="POST">
+      RSSurl:<input type="text" name="url"><br> 
+      <input type="submit" value="add">
+    </form>
+  </div>
+  <div>
+    <h2>导入opml文件</h2>
+    <form method="POST" enctype="multipart/form-data" action="/uploadOpml">
+      <table>
 				<tr><td>File to upload:</td><td><input type="file" name="file" /></td></tr>
 				<tr><td></td><td><input type="submit" value="Upload" /></td></tr>
 			</table>
-        </form>
-    </div>
-    <div>
-        <h2>导出opml文件</h2>
-        <form action="/exportOpml" method="GET">
-            <input type="submit" value="导出">
-        </form>
-    </div>
+    </form>
+  </div>
+  <div>
+    <h2>导出opml文件</h2>
+    <form action="/exportOpml" method="GET">
+      <input type="submit" value="导出">
+    </form>
+  </div>
 </body>
 
 </html>

@@ -9,10 +9,11 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 
 public class MybatisUtil {
-    private static ThreadLocal<SqlSession> threadLocal = new ThreadLocal<SqlSession>();
-    private static SqlSessionFactory sqlSessionFactory;
+	private static ThreadLocal<SqlSession> threadLocal = 
+			new ThreadLocal<SqlSession>();
+  private static SqlSessionFactory sqlSessionFactory;
 
-    static{
+  static{
 		try {
 			Reader reader = Resources.getResourceAsReader("mybatis-config.xml");
 			sqlSessionFactory = new SqlSessionFactoryBuilder().build(reader);
@@ -20,11 +21,11 @@ public class MybatisUtil {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
-    }
-    
-    private MybatisUtil(){}
+  }
+  
+  private MybatisUtil(){}
 
-    public static SqlSession getSqlSession(){
+  public static SqlSession getSqlSession(){
 		SqlSession sqlSession = threadLocal.get();
 		
 		if(sqlSession == null){
@@ -37,7 +38,7 @@ public class MybatisUtil {
 		return sqlSession;
 	}
 
-    public static void closeSqlSession(){
+  public static void closeSqlSession(){
 		
 		SqlSession sqlSession = threadLocal.get();
 		
