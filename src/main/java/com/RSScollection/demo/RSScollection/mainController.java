@@ -50,6 +50,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -81,8 +82,7 @@ public class mainController {
       @RequestParam(name = "user", 
           required = false, 
           defaultValue = "World") String namel,
-      HttpServletRequest request, 
-      HttpSession session) {
+      HttpServletRequest request, HttpSession session) {
     if (session.getAttribute("islogin") == null 
         || (Boolean) session.getAttribute("islogin") != true) {
       log.info("user is not login");
@@ -295,4 +295,19 @@ public class mainController {
         .body(resource);
   }
 
+  /**
+   * this view function will return the full post in a page  
+   * @param id post id 
+   * @param session
+   * @return
+   */
+  @GetMapping(path = "/post/{id}")
+  public String getPost(@PathVariable int id, HttpServletRequest request,
+      HttpSession session) {
+    PostService ps = PostService.getInstance();
+    Posts p = ps.getPost(id);
+    request.setAttribute("post", p);
+    return "post";
+  }
 }
+

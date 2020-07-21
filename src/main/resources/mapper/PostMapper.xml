@@ -22,6 +22,10 @@
     SELECT * FROM posts WHERE user_id = #{userId};
   </select>
 
+  <select id="findBodyById" parameterType="Integer">
+    SELECT body FROM rss WHERE id = #{id};
+  </select>
+
   <select id="findById" parameterType="Integer" resultMap="postMap">
     SELECT * FROM rss WHERE id = #{id};
   </select>

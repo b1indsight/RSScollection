@@ -1,7 +1,6 @@
 package com.RSScollection.demo.RSScollection;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 
 import com.RSScollection.demo.RSScollection.models.*;
@@ -15,7 +14,6 @@ import org.apache.ibatis.session.SqlSession;
 import redis.clients.jedis.Jedis;
 
 public class PostService {
-
 
   private class Information {
     public String title;
@@ -49,8 +47,16 @@ public class PostService {
     }
   }
 
+  private static final PostService INSTANCE = new PostService();
+
+  private PostService() {}
+
+  public static PostService getInstance() {
+    return INSTANCE;
+  }
+
   public Posts getPost(int id) {
-    // TODO: this function should accept a user_id parameter and
+    // TODO: this function should accept a post id parameter and
     // return the Posts
     Posts res;
     String body;
@@ -58,7 +64,7 @@ public class PostService {
     boolean flag = getPostInformationFromRedis(id, inf);
     if (flag) {
       try (SqlSession sqlSession = MybatisUtil.getSqlSession()) {
-        body = (String) sqlSession.selectOne("findBodyByUserId", id);
+        body = (String) sqlSession.selectOne("findBodyById", id);
       }
       res = new Posts(inf.title, inf.url, inf.author, 
           inf.publishedDate, body, inf.userId);

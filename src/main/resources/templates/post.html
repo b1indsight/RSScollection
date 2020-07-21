@@ -1,0 +1,17 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <a th:href="@{${post.getUrl()}}>
+    <title th:text="${post.getTitle()}"></title>
+  </a> 
+</head>
+
+<ul class="information">
+  <li th:text="${post.getDate()}"/>
+  <li th:text="${post.getAuthor()}"/>
+</ul>
+
+<body>
+  <div class="body" th:text="${post.getBody()}"></div>
+</body>
