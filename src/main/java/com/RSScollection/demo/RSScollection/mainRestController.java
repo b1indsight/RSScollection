@@ -60,9 +60,8 @@ public class mainRestController {
       if (tmp.get(0) instanceof Rss) {
         res = (List<Rss>)(List<?>) tmp;
       }
-    }finally{
-      MybatisUtil.closeSqlSession();
     }
+    
     return res;
   }
 

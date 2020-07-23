@@ -8,7 +8,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 
-public class MybatisUtil {
+public class MybatisUtil implements AutoCloseable {
 	private static ThreadLocal<SqlSession> threadLocal = 
 			new ThreadLocal<SqlSession>();
   private static SqlSessionFactory sqlSessionFactory;
@@ -38,7 +38,8 @@ public class MybatisUtil {
 		return sqlSession;
 	}
 
-  public static void closeSqlSession(){
+	@Override
+  public void close(){
 		
 		SqlSession sqlSession = threadLocal.get();
 		

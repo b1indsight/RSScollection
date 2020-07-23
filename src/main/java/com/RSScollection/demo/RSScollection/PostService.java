@@ -94,8 +94,6 @@ public class PostService {
     try (SqlSession sqlSession = MybatisUtil.getSqlSession()){
       sqlSession.insert("savePost", p);
       sqlSession.commit();
-    }finally {
-      MybatisUtil.closeSqlSession();
     }
   }
 
@@ -110,8 +108,6 @@ public class PostService {
 
     try (Jedis jedis = RedisUtil.getRedisConnect()) {
       jedis.set(key, inf.toString());
-    }finally {
-      RedisUtil.closeRedisConnect();
     }
 
   }
@@ -130,8 +126,6 @@ public class PostService {
       e.printStackTrace();
     } catch (JsonProcessingException e) {
       e.printStackTrace();
-    } finally {
-      RedisUtil.closeRedisConnect();
     }
 
     return res;

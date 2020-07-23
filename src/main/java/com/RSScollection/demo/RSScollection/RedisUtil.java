@@ -4,7 +4,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
-public class RedisUtil {
+public class RedisUtil implements AutoCloseable {
   private static ThreadLocal<Jedis> threadLocal = new ThreadLocal<Jedis>();
   private static JedisPool pool;
 
@@ -27,7 +27,8 @@ public class RedisUtil {
 		return jedis;
   }
 
-  public static void closeRedisConnect(){
+  @Override
+  public void close(){
 		
 		Jedis jedis = threadLocal.get();
 		

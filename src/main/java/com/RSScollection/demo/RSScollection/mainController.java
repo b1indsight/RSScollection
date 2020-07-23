@@ -104,9 +104,7 @@ public class mainController {
       } catch (IllegalArgumentException | IOException | FeedException e) {
         e.printStackTrace();
         throw new RuntimeException("can't get posts from Rss list.");
-      } finally{
-        MybatisUtil.closeSqlSession();
-      }
+      } 
       session.setAttribute("posts", posts);
     }
       log.info("");
@@ -139,8 +137,6 @@ public class mainController {
 
       log.info(user.toString() + " login");
       log.info(session.getAttribute("currentUser") + "currentUser is here");
-    }finally{
-      MybatisUtil.closeSqlSession();
     }
     
     return "forward:/";
@@ -158,8 +154,6 @@ public class mainController {
       currentUser.addUrl(rss.getUrl());
       sqlSession.update("update", currentUser);
       sqlSession.commit();
-    }finally{
-      MybatisUtil.closeSqlSession();
     }
     log.info("add Rss is done");
 
@@ -232,8 +226,6 @@ public class mainController {
     } catch (IllegalArgumentException | IOException | FeedException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
-    } finally{
-      MybatisUtil.closeSqlSession();
     }
 
     return (List<Rss>) res;
@@ -250,8 +242,6 @@ public class mainController {
     
     try (SqlSession sqlSession = MybatisUtil.getSqlSession()){
       rss = sqlSession.selectList("findByUserId", currentUser.getId());
-    }finally {
-      MybatisUtil.closeSqlSession();
     }
 
     ArrayList<Module> tmpModules = new ArrayList<Module>();
